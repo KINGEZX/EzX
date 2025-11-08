@@ -1,0 +1,130 @@
+-- Auto Script مع إضافة "Frost Grenade" للأدوات + الزر الأول كل 3 ثواني
+local player = game.Players.LocalPlayer
+local rs = game:GetService("ReplicatedStorage"):WaitForChild("Remotes")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AutoFarmGUI"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- حالة التفعيل
+local toggles = {
+    autoCollect = false,
+    autoBuyTools = false,
+    autoBuySeeds = false,
+    autoRepair = false
+}
+
+-- الألوان
+local COLOR_ON = Color3.fromRGB(255, 255, 0)   -- أصفر = شغال
+local COLOR_OFF = Color3.fromRGB(40, 40, 40)  -- رمادي = متوقف
+
+-- قائمة الأدوات الكاملة (مع Frost Grenade كما طلبت)
+local tools = {
+    "Frost Grenade",        -- أُضيف كما طلبت
+    "Water Bucket", 
+    "Banana Gun", 
+    "Frost Blower", 
+    "Carrot Launcher"
+}
+
+-- قائمة السيدات القوية (كاملة بدون حذف)
+local seeds = {
+    "Watermelon Seed", "Grape Seed", "Cocotank Seed", "Mr Carrot Seed",
+    "Tomatrio Seed", "Shroombino Seed", "Mango Seed", "King Limone Seed", "Starfruit Seed"
+}
+
+-- دالة إنشاء زر تفعيل/إيقاف
+local function createToggle(name, posY, toggleKey, interval, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 210, 0, 50)
+    frame.Position = UDim2.new(1, -230, 0, posY)
+    frame.BackgroundColor3 = COLOR_OFF
+    frame.BorderSizePixel = 2
+    frame.BorderColor3 = Color3.fromRGB(100, 150, 255)
+    frame.Parent = screenGui
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = name
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.Font = Enum.Font.GothamBold
+    textLabel.TextSize = 16
+    textLabel.Parent = frame
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = frame
+
+    local clickBtn = Instance.new("TextButton")
+    clickBtn.Size = UDim2.new(1, 0, 1, 0)
+    clickBtn.BackgroundTransparency = 1
+    clickBtn.Text = ""
+    clickBtn.Parent = frame
+
+    -- تفعيل/إيقاف
+    clickBtn.MouseButton1Click:Connect(function()
+        toggles[toggleKey] = not toggles[toggleKey]
+        frame.BackgroundColor3 = toggles[toggleKey] and COLOR_ON or COLOR_OFF
+    end)
+
+    -- تشغيل الحلقة
+    spawn(function()
+        while wait(interval) do
+            if toggles[toggleKey] and frame.Parent then
+                pcall(callback)
+            end
+        end
+    end)
+end
+
+-- === 1. اخذ فلوس البتات: مرة واحدة كل 3 ثواني ===
+createToggle("اخذ فلوس البتات تلقائي", 20, "autoCollect", 3, function()
+    rs:WaitForChild("EquipBestBrainrots"):FireServer()
+end)
+
+-- === 2. شراء الأدوات: سرعة عالية + Frost Grenade مضاف ===
+local toolIndex = 1
+createToggle("شراء الادوات كلها تلقائي", 90, "autoBuyTools", 0.05, function()
+    local tool = tools[toolIndex]
+    rs:WaitForChild("BuyGear"):FireServer(tool, true)
+    toolIndex = toolIndex % #tools + 1
+end)
+
+-- === 3. شراء السيدات القوية: سرعة عالية + تكرار كامل ===
+local seedIndex = 1
+createToggle("شراء السيدات القويه تلقائي", 160, "autoBuySeeds", 0.05, function()
+    local seed = seeds[seedIndex]
+    rs:WaitForChild("BuyItem"):FireServer(seed, true)
+    seedIndex = seedIndex % #seeds + 1
+end)
+
+-- === 4. ريبير سريع: كل 0.1 ثانية ===
+createToggle("ريبير سريع للاقوى تلقائي", 230, "autoRepair", 0.1, function()
+    local repairRemote = rs:FindFirstChild("RepairStrongest")
+                      or rs:FindFirstChild("RepairBest")
+                      or rs:FindFirstChild("AutoRepair")
+                      or rs:FindFirstChild("Repair")
+    if repairRemote then
+        repairRemote:FireServer()
+    end
+end)
+
+-- === زر الإغلاق (X) ===
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 35, 0, 35)
+closeBtn.Position = UDim2.new(1, -45, 0, 10)
+closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 20
+closeBtn.Parent = screenGui
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 10)
+closeCorner.Parent = closeBtn
+
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
