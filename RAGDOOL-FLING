@@ -1,0 +1,1 @@
+loadstring(game:HttpGet('https://raw.githubusercontent.com/King1Trx/Main.lua/refs/heads/main/Ragdoll-fling-script-by-king'))()
